@@ -2,7 +2,7 @@
 
 Neohub Prometheus Exporter can be deployed using docker compose on a Linux virtual machine running docker-compose v2.20+
 
-Running with docker-compose:
+## Running with docker-compose
 
 ```code
 git clone https://github.com/fabriziofiorucci/Neohub-Prometheus-Exporter
@@ -20,13 +20,13 @@ Edit `docker-compose.yaml` and configure the following fields:
 docker-compose -f docker-compose.yaml up -d
 ```
 
-Testing:
+## Testing
 
 ```code
 curl 127.0.0.1:8000
 ```
 
-Stopping:
+## Stopping
 
 ```code
 docker-compose -f docker-compose.yaml down
