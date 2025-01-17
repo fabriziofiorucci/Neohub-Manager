@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: neohub-exporter
+  labels:
+    app: neohub-exporter
+spec:
+  selector:
+    matchLabels:
+      app: neohub-exporter
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: neohub-exporter
+    spec:
+      containers:
+      - name: neohub-exporter
+        image: fiorucci/neohub-prometheus-exporter:latest
+        ports:
+        - containerPort: 8000
+        env:
+          # Nehub IP or hostname
+          - name: SERVER
+            value: "<NEOHUP_IP_OR_HOSTNAME>"
+
+          # SERVER_PORT defaults to 4242 if not specified
+          #- name: SERVER_PORT
+          #  value: "4242"
+
+          # Neohub polling interval in seconds, defaults to 5 seconds
+          #- name: INTERVAL
+          #  value: "5"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: neohub-exporter
+  labels:
+    app: neohub-exporter
+spec:
+  ports:
+  - name: prometheus-exporter
+    port: 8000
+  selector:
+    app: neohub-exporter
+  type: ClusterIP
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: neohub-exporter
+  labels:
+    app: neohub-exporter
+spec:
+  rules:
+    - host: <NEOHUB_EXPORTER_FQDN>
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: neohub-exporter
+                port:
+                  number: 8000

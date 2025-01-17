@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  neohub:
+    image: fiorucci/neohub-prometheus-exporter:latest
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    environment:
+      #LISTEN_PORT: 8000
+      SERVER: <NEOHUB_IP_OR_HOSTNAME>
+      #SERVER_PORT: 4242
+      #INTERVAL: 5
+    container_name: "neohub-prometheus-exporter"
+    restart: always
+    ports:
+      - "8000:8000"
