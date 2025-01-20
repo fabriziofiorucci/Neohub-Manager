@@ -8,6 +8,9 @@ import time
 import socket
 import json
 
+# Neohub commands
+import commands
+
 from prometheus_client import start_http_server, Gauge
 
 # Exporter port
@@ -20,12 +23,11 @@ neohub_port = os.environ['SERVER_PORT'] if 'SERVER_PORT' in os.environ else '424
 # Polling interval
 polling_interval = os.environ['INTERVAL'] if 'INTERVAL' in os.environ else '5'
 
-
-# Poll Neohub - returns a JSON payload
-def poll_neohub():
+# Send command to Neohub - returns a JSON payload
+def poll_neohub(cmd):
   s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
   s.connect((neohub_server, int(neohub_port)))
-  s.sendall(b'{"GET_LIVE_DATA":0}\0\r')
+  s.sendall((cmd+'\0\r').encode())
 
   reply = tcp_recv(s,timeout=1)
   s.close()
@@ -110,7 +112,7 @@ start_http_server(int(listen_port))
 
 # Update the metric every polling_interval seconds
 while True:
-    neohub = poll_neohub()
+    neohub = poll_neohub(cmd=commands.CMD_GET_LIVE_DATA)
 
     if neohub is not None:
       for device in neohub['devices']:
