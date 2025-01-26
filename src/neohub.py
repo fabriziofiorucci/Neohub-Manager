@@ -21,11 +21,16 @@ neohub_port = os.environ['SERVER_PORT'] if 'SERVER_PORT' in os.environ else '424
 polling_interval = os.environ['INTERVAL'] if 'INTERVAL' in os.environ else '5'
 
 
-# Poll Neohub - returns a JSON payload
-def poll_neohub():
+# Formats Neohub command '{"CMD_NAME":PARM}\0\r'
+def make_neohub_command(cmd,parm):
+  return '{"'+cmd+'":'+str(parm)+'}\0\r'
+
+
+# Send command to Neohub - returns a JSON payload
+def poll_neohub(cmd,parm):
   s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
   s.connect((neohub_server, int(neohub_port)))
-  s.sendall(b'{"GET_LIVE_DATA":0}\0\r')
+  s.sendall(make_neohub_command(cmd=cmd,parm=parm).encode())
 
   reply = tcp_recv(s,timeout=1)
   s.close()
@@ -71,14 +76,17 @@ def tcp_recv(the_socket,timeout=2):
     return ''.join(total_data)
 
 
-def update_prometheus_metrics(neohub_json: dict):
-  neohub_prometheus.labels(name=neohub_json['ZONE_NAME'],variable='set_temperature').set(neohub_json['SET_TEMP'])
-  neohub_prometheus.labels(name=neohub_json['ZONE_NAME'],variable='current_temperature').set(neohub_json['ACTUAL_TEMP'])
-  neohub_prometheus.labels(name=neohub_json['ZONE_NAME'],variable='heating_on').set(neohub_json['HEAT_ON'])
-  neohub_prometheus.labels(name=neohub_json['ZONE_NAME'],variable='away').set(neohub_json['AWAY'])
-  neohub_prometheus.labels(name=neohub_json['ZONE_NAME'],variable='standby').set(neohub_json['STANDBY'])
-  neohub_prometheus.labels(name=neohub_json['ZONE_NAME'],variable='low_battery').set(neohub_json['LOW_BATTERY'])
-  neohub_prometheus.labels(name=neohub_json['ZONE_NAME'],variable='is_thermostat').set(neohub_json['THERMOSTAT'] if 'THERMOSTAT' in neohub_json else 0)
+def update_prometheus_metrics(live_data: dict, hours_run: dict):
+  zn = live_data['ZONE_NAME']
+
+  neohub_prometheus.labels(name=zn,variable='set_temperature').set(live_data['SET_TEMP'])
+  neohub_prometheus.labels(name=zn,variable='current_temperature').set(live_data['ACTUAL_TEMP'])
+  neohub_prometheus.labels(name=zn,variable='heating_on').set(live_data['HEAT_ON'])
+  neohub_prometheus.labels(name=zn,variable='away').set(live_data['AWAY'])
+  neohub_prometheus.labels(name=zn,variable='standby').set(live_data['STANDBY'])
+  neohub_prometheus.labels(name=zn,variable='low_battery').set(live_data['LOW_BATTERY'])
+  neohub_prometheus.labels(name=zn,variable='is_thermostat').set(live_data['THERMOSTAT'] if 'THERMOSTAT' in live_data else 0)
+  neohub_prometheus.labels(name=zn,variable='hours_run').set(hours_run['today'][zn])
 
 
 #
@@ -110,10 +118,13 @@ start_http_server(int(listen_port))
 
 # Update the metric every polling_interval seconds
 while True:
-    neohub = poll_neohub()
+    live_data = poll_neohub(cmd="GET_LIVE_DATA",parm=0)
 
-    if neohub is not None:
-      for device in neohub['devices']:
-        update_prometheus_metrics(device)
+    if live_data is not None:
+      for device in live_data['devices']:
+        device_id = device['DEVICE_ID']
+        hours_run = poll_neohub(cmd="GET_HOURSRUN",parm=device_id)
+
+        update_prometheus_metrics(live_data=device, hours_run=hours_run)
 
     time.sleep(int(polling_interval))
