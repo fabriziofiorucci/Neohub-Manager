@@ -76,6 +76,7 @@ neohub{name="Master Bedroom",variable="away"} 0.0
 neohub{name="Master Bedroom",variable="standby"} 0.0
 neohub{name="Master Bedroom",variable="low_battery"} 0.0
 neohub{name="Master Bedroom",variable="is_thermostat"} 1.0
+neohub{name="Master Bedroom",variable="hours_run"} 11.0
 neohub{name="Hallway",variable="set_temperature"} 18.0
 neohub{name="Hallway",variable="current_temperature"} 19.2
 neohub{name="Hallway",variable="heating_on"} 0.0
@@ -83,6 +84,7 @@ neohub{name="Hallway",variable="away"} 0.0
 neohub{name="Hallway",variable="standby"} 0.0
 neohub{name="Hallway",variable="low_battery"} 0.0
 neohub{name="Hallway",variable="is_thermostat"} 1.0
+neohub{name="Hallway",variable="hours_run"} 8.0
 neohub{name="Upstairs Hall",variable="set_temperature"} 0.0
 neohub{name="Upstairs Hall",variable="current_temperature"} 255.255
 neohub{name="Upstairs Hall",variable="heating_on"} 0.0
@@ -90,4 +92,5 @@ neohub{name="Upstairs Hall",variable="away"} 0.0
 neohub{name="Upstairs Hall",variable="standby"} 0.0
 neohub{name="Upstairs Hall",variable="low_battery"} 0.0
 neohub{name="Upstairs Hall",variable="is_thermostat"} 0.0
+neohub{name="Upstairs Hall",variable="hours_run"} 0.0
 ```
