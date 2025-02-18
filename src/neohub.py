@@ -26,7 +26,7 @@ def make_neohub_command(cmd,parm):
   return '{"'+cmd+'":'+str(parm)+'}\0\r'
 
 
-# Send command to Neohub - returns a JSON payload
+# Send command to Neohub - returns True/False to indicate successful completion or not, and the JSON payload
 def poll_neohub(cmd,parm):
   s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
   s.connect((neohub_server, int(neohub_port)))
@@ -35,7 +35,12 @@ def poll_neohub(cmd,parm):
   reply = tcp_recv(s,timeout=1)
   s.close()
 
-  return json.loads(reply.replace('\n\0',''))
+  jsonReply = json.loads(reply.strip('\n\0'))
+
+  if 'error' in jsonReply:
+    return False, jsonReply
+
+  return True, jsonReply
 
 
 # Receive data from TCP socket
@@ -118,13 +123,14 @@ start_http_server(int(listen_port))
 
 # Update the metric every polling_interval seconds
 while True:
-    live_data = poll_neohub(cmd="GET_LIVE_DATA",parm=0)
+    live_data_status, live_data = poll_neohub(cmd="GET_LIVE_DATA",parm=0)
 
     if live_data is not None:
       for device in live_data['devices']:
         device_id = device['DEVICE_ID']
-        hours_run = poll_neohub(cmd="GET_HOURSRUN",parm=device_id)
+        hours_run_status, hours_run = poll_neohub(cmd="GET_HOURSRUN",parm=device_id)
 
-        update_prometheus_metrics(live_data=device, hours_run=hours_run)
+        if hours_run_status:
+          update_prometheus_metrics(live_data=device, hours_run=hours_run)
 
     time.sleep(int(polling_interval))
